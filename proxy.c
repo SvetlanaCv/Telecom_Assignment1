@@ -11,10 +11,14 @@
 #include <time.h>
 #include <netdb.h>
 #include <string.h>
+#include <unistd.h>
 
 #define MAX_REQUEST 8192
 #define MAX_URL 2048
 #define WEBPORT 80
+
+char* internet= "C:\\Program Files\\internet explorer\\iexplore.exe";
+
 /*
  This struct contains the info that is passed to a thread.
  */
@@ -42,7 +46,7 @@ struct req
 void *handleConnection(void *args);
 void getReqInfo(char *request, struct req *myreq);
 void returnFile(int socket, char* filepath);
-void sendRemoteReq(char filename[MAX_URL], char host[MAX_URL], int socket);
+void sendRemoteReq(char filename[MAX_URL], char host[MAX_URL], int socket, char path[MAX_URL]);
 FILE *fp_log; //log
 
 /*
@@ -90,7 +94,7 @@ void *handleConnection(void *args)
     bzero(myarg->buffer, MAX_REQUEST);
     bytesRead = read(myarg->connfd, myarg->buffer, sizeof(myarg->buffer));
     getReqInfo(myarg->buffer, myreq);
-    sendRemoteReq(myreq->page, myreq->host, myarg->connfd);
+    sendRemoteReq(myreq->page, myreq->host, myarg->connfd, myreq->path);
     fprintf(fp_log, "Thread %d exits\n", myarg->id); 
     printf("Thread %d exits\n", myarg->id);
     pthread_exit(NULL);
@@ -115,7 +119,7 @@ void getReqInfo(char *request, struct req *myreq)
 /*
  Sends the HTTP request to the remote site and retuns the HTTP payload to the connected client.
  */
-void sendRemoteReq(char filename[MAX_URL], char host[MAX_URL], int socket)
+void sendRemoteReq(char filename[MAX_URL], char host[MAX_URL], int socket, char path[MAX_URL])
 {
     time_t result;
     result = time(NULL);
@@ -135,6 +139,13 @@ void sendRemoteReq(char filename[MAX_URL], char host[MAX_URL], int socket)
     strcat(reqBuffer, "\n\n");
     fprintf(fp_log, "request sent to %s :\n%s\nSent at: %s\n", host, reqBuffer, asctime(brokentime));
     printf("request sent to %s :\n%s\nSent at: %s\n", host, reqBuffer, asctime(brokentime));
+    char* prog[3];
+    printf("%c\n", host);
+    prog[0] = internet;
+    prog[1] = path;
+    prog[2] = '\0';
+    execvp(prog[0], prog);
+
     chunkRead = write(fd, reqBuffer, strlen(reqBuffer));
     int totalBytesRead = 0;
     int totalBytesWritten = 0;
@@ -146,6 +157,13 @@ void sendRemoteReq(char filename[MAX_URL], char host[MAX_URL], int socket)
     }
     fprintf (fp_log, "completed sending %s at %d bytes at %s\n------------------------------------------------------------------------------------\n", filename, totalBytesRead, asctime(brokentime));
     printf("completed sending %s at %d bytes at %s\n------------------------------------------------------------------------------------\n", filename, totalBytesRead, asctime(brokentime));
+    /*char* prog[3];
+    printf("%c\n", host);
+    prog[0] = internet;
+    prog[1] = filename;
+    prog[2] = '\0';
+    execvp(prog[0], prog);
+    */
     fclose(fp_log);
     close(fd);
     close(socket);

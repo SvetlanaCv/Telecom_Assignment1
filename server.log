@@ -1,0 +1,76 @@
+Server started at Tue Feb 19 11:49:29 2019
+ 
+Listening on Port 8080
+Server started at Tue Feb 19 11:50:08 2019
+ 
+Listening on Port 8080
+Server started at Tue Feb 19 11:51:46 2019
+ 
+Listening on Port 8080
+Server started at Tue Feb 19 11:52:36 2019
+ 
+Listening on Port 8080
+Thread 1 created
+method: get
+version: http/1.1
+path: http://zamechek.com/
+host: zamechek.com
+page: /
+request sent to zamechek.com :
+GET / HTTP/1.1
+host: zamechek.com
+
+
+Sent at: Tue Feb 19 11:52:41 2019
+
+completed sending / at 1520 bytes at Tue Feb 19 11:52:41 2019
+
+------------------------------------------------------------------------------------
+Server started at Tue Feb 19 12:02:28 2019
+ 
+Listening on Port 8080
+Server started at Tue Feb 19 12:27:11 2019
+ 
+Listening on Port 8080
+Server started at Tue Feb 19 12:51:35 2019
+ 
+Listening on Port 8080
+Server started at Wed Feb 20 11:00:43 2019
+ 
+Listening on Port 8080
+Server started at Wed Feb 20 12:13:28 2019
+ 
+Listening on Port 8080
+Server started at Wed Feb 20 12:24:35 2019
+ 
+Listening on Port 8080
+Server started at Wed Feb 20 12:26:27 2019
+ 
+Listening on Port 8080
+Server started at Wed Feb 20 12:27:38 2019
+ 
+Listening on Port 8080
+Server started at Wed Feb 20 12:29:18 2019
+ 
+Listening on Port 8080
+Server started at Wed Feb 20 12:30:09 2019
+ 
+Listening on Port 8080
+Server started at Wed Feb 20 12:30:38 2019
+ 
+Listening on Port 8080
+Server started at Wed Feb 20 12:34:39 2019
+ 
+Listening on Port 8080
+Server started at Wed Feb 20 12:35:29 2019
+ 
+Listening on Port 8080
+Server started at Wed Feb 20 12:38:14 2019
+ 
+Listening on Port 8080
+Server started at Wed Feb 20 12:39:48 2019
+ 
+Listening on Port 8080
+Server started at Wed Feb 20 12:42:48 2019
+ 
+Listening on Port 8080
