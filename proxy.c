@@ -93,6 +93,7 @@ void *handleConnection(void *args)
     int bytesRead;
     bzero(myarg->buffer, MAX_REQUEST);
     bytesRead = read(myarg->connfd, myarg->buffer, sizeof(myarg->buffer));
+    printf("myArg Buffer: %s\n", myarg->buffer);
     getReqInfo(myarg->buffer, myreq);
     sendRemoteReq(myreq->page, myreq->host, myarg->connfd, myreq->path);
     fprintf(fp_log, "Thread %d exits\n", myarg->id); 
@@ -139,31 +140,19 @@ void sendRemoteReq(char filename[MAX_URL], char host[MAX_URL], int socket, char 
     strcat(reqBuffer, "\n\n");
     fprintf(fp_log, "request sent to %s :\n%s\nSent at: %s\n", host, reqBuffer, asctime(brokentime));
     printf("request sent to %s :\n%s\nSent at: %s\n", host, reqBuffer, asctime(brokentime));
+    chunkRead = write(fd, reqBuffer, strlen(reqBuffer));
+    int totalBytesRead = 0;
+    int totalBytesWritten = 0;
+    chunkRead = read(fd, data, sizeof(data));
+    chunkWritten = write(socket, data, chunkRead);
+    fprintf (fp_log, "completed sending %s at %d bytes at %s\n------------------------------------------------------------------------------------\n", filename, totalBytesRead, asctime(brokentime));
+    printf("completed sending %s at %d bytes at %s\n------------------------------------------------------------------------------------\n", filename, totalBytesRead, asctime(brokentime));
     char* prog[3];
     printf("%c\n", host);
     prog[0] = internet;
     prog[1] = path;
     prog[2] = '\0';
     execvp(prog[0], prog);
-
-    chunkRead = write(fd, reqBuffer, strlen(reqBuffer));
-    int totalBytesRead = 0;
-    int totalBytesWritten = 0;
-    while ((chunkRead = read(fd, data, sizeof(data)))!= (size_t)NULL)//send file
-    {
-        chunkWritten = write(socket, data, chunkRead);
-        totalBytesRead += chunkRead;
-        totalBytesWritten += chunkWritten;
-    }
-    fprintf (fp_log, "completed sending %s at %d bytes at %s\n------------------------------------------------------------------------------------\n", filename, totalBytesRead, asctime(brokentime));
-    printf("completed sending %s at %d bytes at %s\n------------------------------------------------------------------------------------\n", filename, totalBytesRead, asctime(brokentime));
-    /*char* prog[3];
-    printf("%c\n", host);
-    prog[0] = internet;
-    prog[1] = filename;
-    prog[2] = '\0';
-    execvp(prog[0], prog);
-    */
     fclose(fp_log);
     close(fd);
     close(socket);

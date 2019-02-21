@@ -3,7 +3,7 @@
 #include <stdlib.h> 
 #include <string.h> 
 #include <sys/socket.h> 
-#define MAX 80 
+#define MAX 120 
 #define MAX_REQUEST 8192
 #define PORT 8080 
 #define SA struct sockaddr
@@ -25,7 +25,7 @@ void func(int sockfd)
     while ((buff[n++] = getchar()) != '\n') 
         ; 
     write(sockfd, buff, sizeof(buff)); 
-    bzero(buff, sizeof(buff)); 
+    bzero(buff, sizeof(buff));
     read(sockfd, buff, sizeof(buff)); 
     printf("From Server : %s", buff); 
     if ((strncmp(buff, "exit", 4)) == 0) { 
