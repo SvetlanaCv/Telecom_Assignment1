@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <time.h>
 #include "mysocket.h"
 #include <time.h>
 #include <netdb.h>
@@ -63,6 +64,14 @@ void getReqInfo(char *request, struct req *myreq);
 void returnFile(int socket, char* filepath);
 void sendRemoteReq(char filename[MAX_URL], char host[MAX_URL], int socket, char path[MAX_URL], char buffer[MAX_REQUEST]);
 FILE *fp_log; //log
+void *checkForBlock(void *);
+
+void *checkForBlock(void * unused){
+	printf("Can I hear this?");
+	char *input[10];
+	scanf("%s", &input);
+	printf("You said: %s", input);
+}
 
 /*
  Main setup the socket for listening and enters an infinate while loop. 
@@ -82,19 +91,16 @@ int main(int argc, char** argv) {
     fclose(fp_log);
     struct args* myargs;
     myargs = (struct args*)malloc(sizeof(struct args));
+    //pthread_t firstT;
+    //pthread_create(&firstT, NULL, checkForBlock, NULL);
     while (1)
     {
-	//printf("start");
-	//printCache();
         myargs->connfd = listenFor(srvfd);
         fp_log = fopen("server.log", "a");
         pthread_t thread;
         threadID++;
         myargs->id = threadID;
-        //printCache();
 	pthread_create(&thread, NULL, handleConnection, myargs); //thread never joins
-        //printf("end");
-	//printCache();
 	fprintf(fp_log, "Thread %d created\n", myargs->id); 
         printf("Thread %d created\n", myargs->id);
     }
@@ -109,6 +115,7 @@ int main(int argc, char** argv) {
  */
 void *handleConnection(void *args)
 {
+    clock_t start = clock();
     struct args* myarg = (struct args*) args;
     struct req* myreq;
     myreq = (struct req*) malloc(sizeof(struct req));
@@ -135,6 +142,8 @@ void *handleConnection(void *args)
     	    getReqInfo(myarg->buffer, myreq);
     	    sendRemoteReq(myreq->page, myreq->host, myarg->connfd, myreq->path, request);
     }
+    int diff = clock() - start;
+    printf("Function took: %dms\n", diff);
     printCache();
     fprintf(fp_log, "Thread %d exits\n", myarg->id); 
     printf("Thread %d exits\n", myarg->id);
