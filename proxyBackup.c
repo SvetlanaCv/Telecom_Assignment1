@@ -121,23 +121,19 @@ void *handleConnection(void *args)
     //printCache();
     struct cacheObject* obj;
     obj = inCache(request);
-    printf("REQUEST: %s", request);
     if(obj!=NULL){
-	printf("FOUND CACHED DATA?");
+	printf("FOUND CACHED DATA. SENDING ON TO CLIENT.\n");
 	write(myarg->connfd, obj->message, MAX_MSG);
-	printf("sent");
+	printf("DATA SENT. OPENING BROWSER.\n");
 	char* prog[3];
     	prog[0] = internet;
     	prog[1] = obj->site;
     	prog[2] = '\0';
-    //execvp(prog[0], prog);
+        //execvp(prog[0], prog);
     }
     else{
-	    printf("before get req");
     	    getReqInfo(myarg->buffer, myreq);
-	    printf("after get req");
     	    sendRemoteReq(myreq->page, myreq->host, myarg->connfd, myreq->path, request);
-	    printf("after send req");
     }
     printCache();
     fprintf(fp_log, "Thread %d exits\n", myarg->id); 
@@ -155,11 +151,12 @@ void getReqInfo(char *request, struct req *myreq)
     strncpy(myreq->method, strtok(request, " "), 16-1);
     strncpy(myreq->path, strtok(NULL, " "), MAX_URL-1);
     strncpy(myreq->version, strtok(NULL, "\r\n"), 16-1);
-    sscanf(myreq->path, "http://%99[^/]%99[^\n]", host, page);
+    if(strstr(myreq->request, "https")!=NULL){printf("FOUND HTTPS");sscanf(myreq->path, "https://%99[^/]%99[^\n]", host, page);}
+    else {sscanf(myreq->path, "http://%99[^/]%99[^\n]", host, page);}
     strncpy(myreq->host, host, MAX_URL-1);
     strncpy(myreq->page, page, MAX_URL-1);
     fprintf (fp_log, "method: %s\nversion: %s\npath: %s\nhost: %s\npage: %s\n", myreq->method, myreq->version, myreq->path, myreq->host, myreq->page);
-    //printf("method: %s\nversion: %s\npath: %s\nhost: %s\npage: %s\n", myreq->method, myreq->version, myreq->path, myreq->host, myreq->page);
+    printf("method: %s\nversion: %s\npath: %s\nhost: %s\npage: %s\n", myreq->method, myreq->version, myreq->path, myreq->host, myreq->page);
 }
 /*
  Sends the HTTP request to the remote site and retuns the HTTP payload to the connected client.
@@ -191,16 +188,13 @@ void sendRemoteReq(char filename[MAX_URL], char host[MAX_URL], int socket, char 
     chunkWritten = write(socket, data, chunkRead);
     fprintf (fp_log, "completed sending %s at %d bytes at %s\n------------------------------------------------------------------------------------\n", filename, totalBytesRead, asctime(brokentime));
     printf("completed sending %s at %d bytes at %s\n------------------------------------------------------------------------------------\n", filename, totalBytesRead, asctime(brokentime));
-    printf("HERE??????");
     char *prog[3];
     prog[0] = internet;
     prog[1] = path;
     prog[2] = '\0';
-    printf("HEHEHEHEHEHE");
     struct cacheObject* obj;
     obj = (struct cacheObject*) malloc(sizeof(struct cacheObject*));
     strcpy(obj->request, buffer);
-    printf("HEREHERHEREHERE %s", obj->request);
     strncpy(obj->message, data, MAX_MSG-1);
     strncpy(obj->site, path, MAX_MSG-1);
     addCache(obj);
@@ -234,7 +228,6 @@ struct cacheObject* inCache(char request[MAX_MSG]){
 	struct cacheObject* obj;
 	obj = start;
 	while(i<5){
-		printf("Obj REQ: %s\nREQ: %s\n", obj->request, request);
 		if(strcmp(obj->request, request)==0) {return obj;}
 		else {obj = obj->next;}
 		i++;
@@ -250,4 +243,3 @@ void makeCache(){
 	start->next->next->next->next = (struct cacheObject*) malloc(sizeof(struct cacheObject));
 	start->next->next->next->next->next = NULL;
 }
-
