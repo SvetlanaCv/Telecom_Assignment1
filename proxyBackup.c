@@ -68,11 +68,11 @@ FILE *fp_log; //log
 void checkForBlock();
 FILE *blocklist; //list of blocked URLs
 
-typedef struct node //node for blocking linked list
-{
-    char val[MAX_STR_LEN];
-    struct node * next;
-} Node_t;
+//typedef struct node //node for blocking linked list
+//{
+//    char val[MAX_STR_LEN];
+//    struct node * next;
+//} Node_t;
 
 
 /*
@@ -145,53 +145,37 @@ void *handleConnection(void *args)
         //execvp(prog[0], prog);
     }
     else{	//otherwise, continue as normal
-    		getReqInfo(myarg->buffer, myreq);	//parses all information from request
-		blocklist = fopen("server.blocklist", "r");	//open blocked URL file
-		if(blocklist == NULL) {printf("ERROR: CANNOT OPEN FILE");}
-		Node_t *head = NULL;				//the following code loads URLS from the file in a loop and stores them in a linked list 
-		head = malloc(sizeof(Node_t));
-		Node_t *current = head;
-		char buff[BUFFLEN];
-		char *input = calloc(BUFFLEN, sizeof(char));
-		while(fgets(buff, sizeof(buff), blocklist))
-		{
-			printf("INPUT FIRST: %s\n", buff);
-			input = realloc(input, strlen(input)+1+strlen(buff));
-			strcat(input,buff); 
-		} 
-		char delim[] = "\n";
-		char *data[sizeof(input)+1];
-		char *ptr = strtok(input, delim);
-		int i = 0;
-		while(ptr != NULL)
-		{
-			data[i] = ptr;
-			current->next = malloc(sizeof(Node_t));
-			if(data[i]!=NULL)
-			{
-				printf("THe data is: %s\n", data[i]);
-				strcpy(current->val, data[i]);
-				current = current->next;
-				ptr = strtok(NULL, delim);
+    	getReqInfo(myarg->buffer, myreq);	//parses all information from request
+	blocklist = fopen("server.blocklist", "r");	//open blocked URL file
+	if(blocklist == NULL) {printf("ERROR: CANNOT OPEN FILE");}
+	char buff[BUFFLEN];				//the following code parses file info into data
+	char *input = calloc(BUFFLEN, sizeof(char));
+	while(fgets(buff, sizeof(buff), blocklist))
+	{
+		input = realloc(input, strlen(input)+1+strlen(buff));
+		strcat(input,buff); 
+	} 
+	free(input);
+	char delim[] = "\n";
+	char *data[sizeof(input)+1];
+	char *ptr = strtok(input, delim);
+	int i = 0;
+	while(ptr != NULL){				//check if any value in data matches, if so, cancel thread
+		data[i] = ptr;
+		if(data[i]!=NULL){
+			printf("The data is: %s\n", data[i]);
+			ptr = strtok(NULL, delim);
+			if(strcmp(data[i], myreq->host)==0){
+				printf("THE REQUEST CLIENT ENTERED IS ON THE BLOCKED LIST.\n ABORT THREAD...\n");
+				free(myreq);
+				write(myarg->connfd, "Requested URL is blocked.", MAX_MSG);
+				fprintf(fp_log, "Thread %d exits\n", myarg->id);
+    				printf("Thread %d exits\n", myarg->id);
+				pthread_exit(NULL);
 			}
-				i++;
-		}  
-		current = head;
-		printf("ARE YOU GETTING HERE????\n%s", head);
-		while(current->next!=NULL)	//the following code checks the stored URLs against the current request
-		{
-			printf("HOW ABOUT HERE???");
-			if(strcmp(current->val,myreq->host) == 0)	//if a match is found, the request is disregarded
-			{
-				printf("PLOPPLOPPLOP, %s\n", current->val);
-				fp_log = fopen("server.log", "a");
-				fprintf(fp_log, "Tried to access blocked URL, connection aborted.");
-				printf("This URL is blocked, aborting connection.\n");
-				exit(0);
-				//not return(0); OR pthread_exit(NULL); ???
-			}
-			current = current->next;
-		} 
+		}
+		i++;
+	}  
     	sendRemoteReq(myreq->page, myreq->host, myarg->connfd, myreq->path, request);	//sends the request to a web browser
     }
     int diff = clock() - start;	//measures timing
@@ -251,7 +235,7 @@ void sendRemoteReq(char filename[MAX_URL], char host[MAX_URL], int socket, char 
     prog[0] = internet;
     prog[1] = path;
     prog[2] = '\0';
-	//execvp(prog[0], prog);	//open web browser
+    //execvp(prog[0], prog);	//open web browser
     struct cacheObject* obj;	//construct cache object
     obj = (struct cacheObject*) malloc(sizeof(struct cacheObject*));
     strcpy(obj->request, buffer);
@@ -259,8 +243,8 @@ void sendRemoteReq(char filename[MAX_URL], char host[MAX_URL], int socket, char 
     strncpy(obj->site, path, MAX_MSG-1);
     addCache(obj);	//add object to cache
     fclose(fp_log);	//close log
-    close(fd);	//close broswer socket
-    close(socket); //close client socket
+    close(fd);		//close broswer socket
+    close(socket); 	//close client socket
 }
 
 void printCache(){	//prints cache
@@ -304,7 +288,7 @@ void makeCache(){	//initiates cache
 }
 
 void checkForBlock(){	//asks user for URLS to lbock, parses them and enters them into a block URL file
-	printf("Enter hostnames separated by a space to block in this format: example.com\nEnter a newline character on a blank line to exit\n");
+	printf("Enter URLs to block. iPress space to exit\n");
         char buff[BUFFLEN];
         char *input = calloc(BUFFLEN, sizeof(char));
         while(*(fgets(buff, sizeof(buff), stdin)) != '\n')
@@ -312,31 +296,21 @@ void checkForBlock(){	//asks user for URLS to lbock, parses them and enters them
             input = realloc(input, strlen(input)+1+strlen(buff));
             strcat(input,buff); 
         }
+	blocklist = fopen("server.blocklist", "a");
         input[strcspn(input, "\n")] = 0;
-        Node_t *head = NULL;
-        head = malloc(sizeof(Node_t));
-        Node_t *current = head;
         char delim[] = " ";
         char *data[sizeof(input)+1];
         char *ptr = strtok(input, delim);
         int i = 0;
-	    while(ptr != NULL)
-	    {
+	while(ptr != NULL)
+	{
             data[i] = ptr;
-            current->next = malloc(sizeof(Node_t));
             if(data[i]!=NULL)
             {
-                strcpy(current->val, data[i]);
-                current = current->next;
-		        ptr = strtok(NULL, delim);
+		fprintf(blocklist, "%s\n", data[i]);
+		ptr = strtok(NULL, delim);
             }
-            i++;
-	    }      
-        blocklist = fopen("server.blocklist", "a");
-        current = head;
-        while(current->next!=NULL){
-            fprintf(blocklist, "%s\n", current->val);
-            current = current->next;
-        }
+        i++;
+	}      
         fclose(blocklist);
 }
